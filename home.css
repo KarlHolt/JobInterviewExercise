@@ -1,0 +1,99 @@
+div {
+	overflow: hidden;
+	margin: 0;
+	padding: 0;
+	width: fit-content;
+}
+
+input {
+	width: fit-content;
+}
+
+body {
+	display: flex;
+	flex-direction: column;
+	height: 100vh;
+	width: 100vw;
+	margin: 0;
+	padding: 0;
+	background-color: antiquewhite;
+}
+
+#header {
+	height: 3em;
+	width: 100%;
+	background-color: red;
+}
+
+#container {
+	height: 100%;
+	width: 100%;
+	background-color: yellowgreen;
+	
+	display: flex;
+	justify-content: row;
+}
+
+#spacer {
+	height: 100%;
+	flex-grow: 1;
+}
+
+#interactive {
+	height: 100%;
+	flex-grow: 4;
+	background-color: aqua;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+#shell {
+	height: 90%;
+	width: 90%;
+	background-color: yellow;
+}
+
+#viewer {
+	height: 80%;
+	flex-grow: 6;
+	width: 100%;
+	background-color: whitesmoke;
+}
+
+#question {
+	flex-grow: 1;
+	width: 100%;
+}
+
+#input {
+	height: 100%;
+	width: 100%;
+	background-color: gold;
+	display: flex;
+	flex-direction: row;
+}
+
+#login {
+	height: 100%;
+	flex-grow: 1;
+
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+#login_box {
+	padding: 5px;
+	height: 10em;
+	width: 75%;
+	background-color: wheat;
+	display: flex;
+	flex-direction: column;
+}
+
+#footer {
+	height: 3em;
+	width: 100%;
+	background-color: red;
+}
