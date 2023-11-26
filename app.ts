@@ -11,6 +11,9 @@ import OpenAI from 'openai';
 let rawData = fs.readFileSync('keys.json', 'utf8');
 let keys = JSON.parse(rawData);
 
+// Sets the path for the repository
+const super_url = process.env.PWD;
+
 // Initialize OpenAI
 const openai = new OpenAI({
 	organization: keys["organization"],
@@ -58,7 +61,6 @@ async function handle_requests(req:any, res:any){
 			user_id = user_id[0].slice("user_id?".length);
 		} catch {
 			console.log("Got request for question, but no user_id attacted")
-			user_id = "lol"
 		}
 		
 		let question = url.match(/question\?([a-z]|[A-Z]|%[0-9][0-9][0-9]| )*/);
@@ -73,23 +75,34 @@ async function handle_requests(req:any, res:any){
 		}
 		const value = await send_question(full_conversation, question, user_id);
 
-		if(!conversations.has(user_id)){
-			user_connect(user_id);
-		}
-		console.log(value);
 		const answer = value["choices"][0]["message"]["content"];
-		let temp = conversations.get(user_id);
-		temp["user_questions"].push(question);
-		temp["gpt_answers"].push(answer);
-		conversations.set(user_id, temp);
+		if(user_id != ""){
+			if(!conversations.has(user_id)){
+				user_connect(user_id);
+			}
+			let temp = conversations.get(user_id);
+			temp["user_questions"].push(question);
+			temp["gpt_answers"].push(answer);
+			conversations.set(user_id, temp);
+		}
 
-		console.log(question)
-		console.log(answer)
+		// The funny thing is that if two requests are close engouh together, from two users
+		// This would be messed up. 
+		console.log("I was asked: " +question)
+		console.log("ChatGPT answred with: " + answer)
 
 		res.send(answer);
+	} else if(fs.existsSync(super_url+url)) {
+		// Could be changed so we have a list with restricted files, and all send the song.
+		if(url.includes("keys.json")){
+			res.send("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+		} else {
+			res.sendFile(super_url+url);
+		}
 	} else {
+		console.log(url);
 		// Default case send homepage.
-		res.sendFile("/home/fony/Git/JobInterviewExercise/home.html");
+		res.sendFile(super_url+"/index.html");
 	}
 }
 
