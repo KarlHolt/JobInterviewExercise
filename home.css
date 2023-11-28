@@ -5,8 +5,19 @@ div {
 	width: fit-content;
 }
 
+h1 {
+	margin: 0;
+	padding: 0;
+	color: darkred;
+}
+
 input {
-	width: fit-content;
+	width: fit-content; 
+}
+
+p {
+	padding: 0;
+	margin: 0;
 }
 
 body {
@@ -22,13 +33,14 @@ body {
 #header {
 	height: 3em;
 	width: 100%;
-	background-color: red;
+	background-color: #8e7b54;
+	display: flex;
+	justify-content: center;
 }
 
 #container {
 	height: 100%;
 	width: 100%;
-	background-color: yellowgreen;
 	
 	display: flex;
 	justify-content: row;
@@ -42,7 +54,6 @@ body {
 #interactive {
 	height: 100%;
 	flex-grow: 4;
-	background-color: aqua;
 	display: flex;
 	justify-content: center;
 	align-items: center;
@@ -51,7 +62,7 @@ body {
 #shell {
 	height: 90%;
 	width: 90%;
-	background-color: yellow;
+	border: 1px solid black;
 }
 
 #viewer {
@@ -59,6 +70,9 @@ body {
 	flex-grow: 6;
 	width: 100%;
 	background-color: whitesmoke;
+	display: flex;
+	flex-direction: column;
+	overflow: scroll;
 }
 
 #question {
@@ -69,7 +83,7 @@ body {
 #input {
 	height: 100%;
 	width: 100%;
-	background-color: gold;
+	background-color: silver;
 	display: flex;
 	flex-direction: row;
 }
@@ -87,13 +101,32 @@ body {
 	padding: 5px;
 	height: 10em;
 	width: 75%;
-	background-color: wheat;
+	background-color: #d1ddd4;
 	display: flex;
 	flex-direction: column;
+	border: 1px solid black;
 }
 
 #footer {
 	height: 3em;
 	width: 100%;
-	background-color: red;
+	background-color: #8e7b54;
+	display: flex;
+	justify-content: center;
+}
+
+
+.chat_messasge{
+	overflow: visible;
+	width: 100%;
+	height: auto;
+	display: flex;
+}
+
+.gpt {
+	justify-content: flex-end;
+}
+
+.user {
+	justify-content: flex-start;
 }
