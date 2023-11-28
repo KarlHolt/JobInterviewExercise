@@ -15,6 +15,7 @@ let keys = JSON.parse(rawData);
 const super_url = process.env.PWD;
 
 // Initialize OpenAI
+// I just realised that this opens a new session!!!!!!!!!!!
 const openai = new OpenAI({
 	organization: keys["organization"],
 	apiKey: keys["openai"],
@@ -88,10 +89,10 @@ async function handle_requests(req:any, res:any){
 
 		// The funny thing is that if two requests are close engouh together, from two users
 		// This would be messed up. 
-		console.log("I was asked: " +question)
-		console.log("ChatGPT answred with: " + answer)
+		console.log("I was asked: " +question);
+		console.log("ChatGPT answered with: " + answer);
 
-		res.send(answer);
+		res.send(JSON.stringify(answer));
 	} else if(fs.existsSync(super_url+url)) {
 		// Could be changed so we have a list with restricted files, and all send the song.
 		if(url.includes("keys.json")){
