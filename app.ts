@@ -16,6 +16,7 @@ const super_url = process.env.PWD;
 
 // Initialize OpenAI
 // I just realised that this opens a new session!!!!!!!!!!!
+// For a bigger implementation with multiple users, one of these should be made for each user.
 const openai = new OpenAI({
 	organization: keys["organization"],
 	apiKey: keys["openai"],
