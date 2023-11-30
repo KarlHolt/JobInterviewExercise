@@ -78,26 +78,27 @@ async function handle_requests(req:any, res:any){
 		const answer = value["choices"][0]["message"]["content"];
 		if(user_id != ""){
 			// Check if user exist
-			const query = "SELECT user_id FROM user_table WHERE user_id=${user_id}";
-			const error_for_user_exist = "error happened when checking for existing user ${user_id}";
+			const query = `SELECT user_id FROM user_table WHERE user_id='${user_id}'`;
+			const error_for_user_exist = `error happened when checking for existing user ${user_id}`;
 			let result = await communicate_with_database(query, error_for_user_exist);
 			if(result != null && result["rows"].length == 0){
 				// create user
 				const password = "";
+				let query = ""
 				if(password == ""){
-					const query = "INSERT INTO user_table(user_id) VALUES(${user_id})";
+					query = `INSERT INTO user_table(user_id) VALUES('${user_id}')`;
 				} else {
-					const query = "INSERT INTO user_table(user_id, password) VALUES(${user_id}, ${password})";
+					query = `INSERT INTO user_table(user_id, password) VALUES('${user_id}', '${password}')`;
 				}
-				const error = "error happened when creating user with id:${user_id}";
+				const error = `error happened when creating user with id:${user_id}`;
 				await communicate_with_database(query, error);
 			}
 
 			// Here I would want to check if the password is correct, but since it is not implemented it doesn't matter
-			const insert_user_question = "INSERT INTO messages(user_id, sender, message, time) VALUES(${user_id}, 'user', ${question}, current_timestamp)";
-			const error="error happened when inserting message for user:${user_id}";
+			const insert_user_question = `INSERT INTO messages(user_id, sender, message, time) VALUES('${user_id}', 'user', '${question}', current_timestamp)`;
+			const error=`error happened when inserting message for user:${user_id}`;
 			await communicate_with_database(insert_user_question, error);
-			const insert_answer = "INSERT INTO messages(user_id, sender, message, time) VALUES(${user_id}, 'gpt', ${answer}, current_timestamp)";
+			const insert_answer = `INSERT INTO messages(user_id, sender, message, time) VALUES('${user_id}', 'gpt', '${answer}', current_timestamp)`;
 			await communicate_with_database(insert_answer, error);
 		}
 
@@ -123,8 +124,8 @@ async function handle_requests(req:any, res:any){
 			console.log("Got request for the database, but no user_id attacted")
 		}
 		// retrieve messages
-		const query = "SELECT * FROM messages WHERE user_id=${user_id}";
-		const error="error happened when retrieving messages for user:${user_id}";
+		const query = `SELECT * FROM messages WHERE user_id='${user_id}'`;
+		const error=`error happened when retrieving messages for user:${user_id}`;
 		res.send(await communicate_with_database(query, error));
 	} else {
 		console.log(url);
