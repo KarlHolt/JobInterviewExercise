@@ -1,43 +1,41 @@
 const express = require('express');
 import * as fs from 'fs';
 import OpenAI from 'openai';
+import { Client } from 'ts-postgres';
 
 // The sad realasation has come to me, that the typescript library I'm using does not
 // seem to have support for assistant, and therefore I can not have it renember outputs
 // and inputs. I will do that manually.
-
-
-// Load keys
-let rawData = fs.readFileSync('keys.json', 'utf8');
-let keys = JSON.parse(rawData);
+// The even sadder realasation has come to me that, they in fact renember it.
+// But fine, gives me a reason to make a user and a database.
 
 // Sets the path for the repository
 const super_url = process.env.PWD;
 
-// Initialize OpenAI
-// I just realised that this opens a new session!!!!!!!!!!!
-// For a bigger implementation with multiple users, one of these should be made for each user.
-const openai = new OpenAI({
-	organization: keys["organization"],
-	apiKey: keys["openai"],
-});
+// Load keys
+const rawData = fs.readFileSync('keys.json', 'utf8');
+const keys = JSON.parse(rawData);
+
+
+// Put this into a function, but it seems, that new instance still have same chat memory
+// Probably because my organization is personal.
+function Initialize_gpt(){
+	// Initialize OpenAI
+	// I just realised that this opens a new session!!!!!!!!!!!
+	// For a bigger implementation with multiple users, one of these should be made for each user.
+	return new OpenAI({
+		organization: keys["organization"],
+		apiKey: keys["openai"],
+	});
+}
+const openai = Initialize_gpt();
 
 // Server set up
 const app = express();
 const port = 3000;
 
-// Making a global mapping to store all conversations in.
-const conversations = new Map;
-
 // Because we let user set his own id, we have a chance that two users get the same id.
 // This would result, in weird behaviour.
-function user_connect(user_id: string){
-	const single_conversation = {
-		user_questions: [],
-		gpt_answers: []
-	}
-	conversations.set(user_id, single_conversation);
-}
 
 // Decoding from ansi values fitted to 3 digits.
 function decode(encoded_string: string){
@@ -79,14 +77,30 @@ async function handle_requests(req:any, res:any){
 
 		const answer = value["choices"][0]["message"]["content"];
 		if(user_id != ""){
-			if(!conversations.has(user_id)){
-				user_connect(user_id);
+			// Check if user exist
+			const query = "SELECT user_id FROM user_table WHERE user_id=${user_id}";
+			const error_for_user_exist = "error happened when checking for existing user ${user_id}";
+			let result = await communicate_with_database(query, error_for_user_exist);
+			if(result != null && result["rows"].length == 0){
+				// create user
+				const password = "";
+				if(password == ""){
+					const query = "INSERT INTO user_table(user_id) VALUES(${user_id})";
+				} else {
+					const query = "INSERT INTO user_table(user_id, password) VALUES(${user_id}, ${password})";
+				}
+				const error = "error happened when creating user with id:${user_id}";
+				await communicate_with_database(query, error);
 			}
-			let temp = conversations.get(user_id);
-			temp["user_questions"].push(question);
-			temp["gpt_answers"].push(answer);
-			conversations.set(user_id, temp);
+
+			// Here I would want to check if the password is correct, but since it is not implemented it doesn't matter
+			const insert_user_question = "INSERT INTO messages(user_id, sender, message, time) VALUES(${user_id}, 'user', ${question}, current_timestamp)";
+			const error="error happened when inserting message for user:${user_id}";
+			await communicate_with_database(insert_user_question, error);
+			const insert_answer = "INSERT INTO messages(user_id, sender, message, time) VALUES(${user_id}, 'gpt', ${answer}, current_timestamp)";
+			await communicate_with_database(insert_answer, error);
 		}
+
 
 		// The funny thing is that if two requests are close engouh together, from two users
 		// This would be messed up. 
@@ -101,6 +115,17 @@ async function handle_requests(req:any, res:any){
 		} else {
 			res.sendFile(super_url+url);
 		}
+	} else if(url.includes("/database_request")){
+		let user_id = url.match(/user_id\?([a-z]|[A-Z]|-|_|[0-9])*/);
+		try{
+			user_id = user_id[0].slice("user_id?".length);
+		} catch {
+			console.log("Got request for the database, but no user_id attacted")
+		}
+		// retrieve messages
+		const query = "SELECT * FROM messages WHERE user_id=${user_id}";
+		const error="error happened when retrieving messages for user:${user_id}";
+		res.send(await communicate_with_database(query, error));
 	} else {
 		console.log(url);
 		// Default case send homepage.
@@ -109,6 +134,8 @@ async function handle_requests(req:any, res:any){
 }
 
 async function send_question(remember_conversation: boolean, question: string, user_id: string){
+	/*
+	This is from a forgotten time
 	let formatted_question = ""
 	if(remember_conversation && conversations.has(user_id)){
 		formatted_question = "We have had the following conversation:\n"
@@ -123,7 +150,8 @@ async function send_question(remember_conversation: boolean, question: string, u
 		formatted_question = formatted_question + "\nBased on this, answer the question: " + question;
 	} else {
 		formatted_question = question
-	}
+	} */
+	const formatted_question = question
 
 	const params: OpenAI.Chat.ChatCompletionCreateParams = {
  		messages: [{ role: 'user', content: formatted_question }],
@@ -132,6 +160,27 @@ async function send_question(remember_conversation: boolean, question: string, u
 	const chatCompletion: OpenAI.Chat.ChatCompletion = await openai.chat.completions.create(params);
 	
 	return chatCompletion;
+}
+
+/* 
+// Check for correct password
+const query = "SELECT password FROM user_table WHERE user_id=${user_id}";
+const error = "error happened when retriving password for user ${user_id}";
+await communicate_with_database(query, error); */
+
+async function communicate_with_database(query: string, error_msg: string){
+	const client = new Client({database: "chatgpt_userhistory"});
+	client.connect();
+	let result = null;
+	try {
+		result = await client.query(query);
+	} catch(err) {
+		console.log("Error happend:", err);
+		console.log("Error message:", error_msg);
+	} finally {
+		await client.end();
+	}
+	return result;
 }
 
 // Using '*' to handle all get results.
