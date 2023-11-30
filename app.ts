@@ -29,6 +29,7 @@ function Initialize_gpt(){
 	});
 }
 const openai = Initialize_gpt();
+send_question(false, "All of your answers should be formatted with html objects instead.", "");
 
 // Server set up
 const app = express();
