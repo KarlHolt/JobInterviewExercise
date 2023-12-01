@@ -29,14 +29,11 @@ function Initialize_gpt(){
 	});
 }
 const openai = Initialize_gpt();
-send_question(false, "All of your answers should be formatted with html objects instead.", "");
+send_question(false, "All of your answers should be formatted with html objects.", "");
 
 // Server set up
 const app = express();
 const port = 3000;
-
-// Because we let user set his own id, we have a chance that two users get the same id.
-// This would result, in weird behaviour.
 
 // Decoding from ansi values fitted to 3 digits.
 function decode(encoded_string: string){
@@ -96,17 +93,18 @@ async function handle_requests(req:any, res:any){
 			}
 
 			// Here I would want to check if the password is correct, but since it is not implemented it doesn't matter
-			const insert_user_question = `INSERT INTO messages(user_id, sender, message, time) VALUES('${user_id}', 'user', '${question}', current_timestamp)`;
+			const formatted_question = question.replaceAll("'", "")
+			const insert_user_question = `INSERT INTO messages(user_id, sender, message, time) VALUES('${user_id}', 'user', '${formatted_question}', current_timestamp)`;
 			const error=`error happened when inserting message for user:${user_id}`;
 			await communicate_with_database(insert_user_question, error);
-			const insert_answer = `INSERT INTO messages(user_id, sender, message, time) VALUES('${user_id}', 'gpt', '${answer}', current_timestamp)`;
-			await communicate_with_database(insert_answer, error);
+			if(answer != null){
+				const formatted_answer = answer.replaceAll("'", "")
+				const insert_answer = `INSERT INTO messages(user_id, sender, message, time) VALUES('${user_id}', 'gpt', '${formatted_answer}', current_timestamp)`;
+				await communicate_with_database(insert_answer, error);
+			}
 		}
 
-
-		// The funny thing is that if two requests are close engouh together, from two users
-		// This would be messed up. 
-		console.log("I was asked: " +question);
+		console.log("I was asked: " + question);
 		console.log("ChatGPT answered with: " + answer);
 
 		res.send(JSON.stringify(answer));
@@ -136,27 +134,8 @@ async function handle_requests(req:any, res:any){
 }
 
 async function send_question(remember_conversation: boolean, question: string, user_id: string){
-	/*
-	This is from a forgotten time
-	let formatted_question = ""
-	if(remember_conversation && conversations.has(user_id)){
-		formatted_question = "We have had the following conversation:\n"
-
-		const conversation = conversations.get(user_id);
-		for(let i=0; i<conversation["user_questions"].length; i++){
-			let temp = "me > " + conversation["user_questions"][i] + "\n";
-			temp += "you > " + conversation["gpt_answers"][i] + "\n";
-			formatted_question += temp;
-		}
-
-		formatted_question = formatted_question + "\nBased on this, answer the question: " + question;
-	} else {
-		formatted_question = question
-	} */
-	const formatted_question = question
-
 	const params: OpenAI.Chat.ChatCompletionCreateParams = {
- 		messages: [{ role: 'user', content: formatted_question }],
+ 		messages: [{ role: 'user', content: question }],
  		model: 'gpt-3.5-turbo',
  	}; 
 	const chatCompletion: OpenAI.Chat.ChatCompletion = await openai.chat.completions.create(params);
